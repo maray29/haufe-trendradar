@@ -2,13 +2,12 @@ import gsap from 'gsap';
 import ScrollTrigger from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
-console.log('hello');
 
 function animateDiagramDesktop() {
   const drawingContainer = document.querySelector('.haufe-trendradar');
   // Fetch the svg from github and append to the embed div
   const diagram =
-    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/d46f64de20b3a27f435e9d0c05682da84dc384e0/haufe-trendradar.html';
+    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/bed745e1dfafd0fc2a0edd10f254483aa8e31972/haufe-trendradar.html';
 
   fetch(diagram)
     .then((response) => response.text())
@@ -21,12 +20,6 @@ function animateDiagramDesktop() {
       const lines = document.querySelector('.lines');
       const learningAndDev = document.querySelector('.learning-and-dev');
       const agileTransformation = document.querySelector('.agile-transformation');
-
-      // const layers = Array.from(document.querySelectorAll('[class^="layer-"]')).sort((a, b) => {
-      //   const numA = parseInt(a.id.replace('layer-', ''), 10);
-      //   const numB = parseInt(b.id.replace('layer-', ''), 10);
-      //   return numA - numB;
-      // });
 
       // Starting point: selection of elements
       const layers = Array.from(document.querySelectorAll('[class^="layer-"]'));
@@ -52,7 +45,9 @@ function animateDiagramDesktop() {
         return acc;
       }, {});
 
-      console.log(groupedLayers);
+      gsap.set('.additional-text', {
+        autoAlpha: 0,
+      });
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -60,6 +55,7 @@ function animateDiagramDesktop() {
           start: 'top top',
         },
       });
+
       tl.from(['.group-1'], {
         autoAlpha: 0,
       })
@@ -116,6 +112,54 @@ function animateDiagramDesktop() {
           autoAlpha: 0,
         }
       );
+
+      const groups = gsap.utils.toArray([
+        '.global-talent',
+        '.sustainability-management',
+        '.people-culture',
+        '.digital-transformation',
+        '.data-intelligence',
+        '.ai-strategy',
+        '.agile-transformation',
+        '.learning-and-dev',
+        '.advances-cybersecurity',
+        '.innovation',
+      ]);
+
+      // const bubbles = gsap.utils.toArray(['.bubble']);
+
+      function animateBubbleOnHover(el) {
+        groups.forEach((group) => {
+          const rect = group.getBBox();
+          const additionalText = group.querySelector('.additional-text');
+          const bubble = group.querySelector('.bubble');
+          if (group !== el) {
+            gsap.to(group, { autoAlpha: 0.1, duration: 0.5 });
+            // group.style.pointerEvents = 'none';
+          } else {
+            gsap.set(group, { transformOrigin: '50% 50%' });
+            gsap.to(group, { scale: 1.2 });
+            gsap.to(additionalText, { autoAlpha: 1, duration: 0.5, delay: 0.25 });
+          }
+        });
+      }
+
+      groups.forEach((group) => {
+        const rect = group.getBBox();
+        console.log('Rect: ', rect);
+        const bubble = group.querySelector('.bubble');
+        const additionalText = group.querySelector('.additional-text');
+        bubble.addEventListener('mouseenter', () => {
+          animateBubbleOnHover(group);
+        });
+        bubble.addEventListener('mouseleave', () => {
+          gsap.to(groups, { autoAlpha: 1, scale: 1, duration: 0.5 }); // Reset all bubbles to full opacity
+          gsap.to('.additional-text', { autoAlpha: 0, duration: 0.5 });
+          // groups.forEach((resetBubble) => {
+          //   resetBubble.style.pointerEvents = 'auto';
+          // });
+        });
+      });
     })
     .catch((error) => {
       console.error('Error fetching data:', error);
