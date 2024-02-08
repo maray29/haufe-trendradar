@@ -7,7 +7,7 @@ function animateDiagramDesktop() {
   const drawingContainer = document.querySelector('.haufe-trendradar');
   // Fetch the svg from github and append to the embed div
   const diagram =
-    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/bed745e1dfafd0fc2a0edd10f254483aa8e31972/haufe-trendradar.html';
+    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/739bf12e12c3437274022d3b273413db705027f0/haufe-trendradar.html';
 
   fetch(diagram)
     .then((response) => response.text())
@@ -45,9 +45,13 @@ function animateDiagramDesktop() {
         return acc;
       }, {});
 
+      console.log(groupedLayers);
+
       gsap.set('.additional-text', {
         autoAlpha: 0,
       });
+
+      const linesAndTexts = gsap.utils.toArray(['.group-1', '.group-2', '.group-3', '.group-4']);
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -56,22 +60,25 @@ function animateDiagramDesktop() {
         },
       });
 
-      tl.from(['.group-1'], {
+      tl.from(linesAndTexts, {
         autoAlpha: 0,
-      })
-        .from(['.group-2'], {
-          autoAlpha: 0,
-        })
-        .from(['.group-3'], {
-          autoAlpha: 0,
-        })
-        .from(['.group-4'], {
-          autoAlpha: 0,
-        });
-      // .from(groupedLayers, {
+        duration: 0.5,
+        stagger: 0.2,
+      }).to({}, { duration: 0.05 });
+
+      // tl.from(['.group-1'], {
       //   autoAlpha: 0,
-      //   stagger: 0.1,
       // })
+      //   .from(['.group-2'], {
+      //     autoAlpha: 0,
+      //   })
+      //   .from(['.group-3'], {
+      //     autoAlpha: 0,
+      //   })
+      //   .from(['.group-4'], {
+      //     autoAlpha: 0,
+      //   });
+
       // Duration of the animation for each element
       const duration = 1; // 1 second for demonstration
 
@@ -87,31 +94,35 @@ function animateDiagramDesktop() {
         tl.from(
           groupedLayers[group],
           {
-            duration: 0.35,
+            duration: 0.5,
             autoAlpha: 0, // Example: animate to full opacity
-            stagger: 0.02, // Stagger the start time of each element's animation within the group
+            stagger: 0.01, // Stagger the start time of each element's animation within the group
             delay: 0, // Delay the start of the animation for the current group
           },
           '<0.15'
         );
       });
-      tl.from(
-        [
-          '.learning-and-dev-text',
-          '.agile-transformation-text',
-          '.ai-strategy-text',
-          '.digital-transformation-text',
-          '.data-intelligence-text',
-          '.advances-cybersecurity-text',
-          '.innovation-text',
-          '.sustainability-management-text',
-          '.global-talent-text',
-          '.people-culture-text',
-        ],
-        {
-          autoAlpha: 0,
-        }
-      );
+      // tl.from(
+      //   [
+      //     '.learning-and-dev-text',
+      //     '.agile-transformation-text',
+      //     '.ai-strategy-text',
+      //     '.digital-transformation-text',
+      //     '.data-intelligence-text',
+      //     '.advances-cybersecurity-text',
+      //     '.innovation-text',
+      //     '.sustainability-management-text',
+      //     '.global-talent-text',
+      //     '.people-culture-text',
+      //   ],
+      //   {
+      //     autoAlpha: 0,
+      //     stagger: 0.1,
+      //   },
+      //   '<0.15'
+      // );
+
+      // Hover animation
 
       const groups = gsap.utils.toArray([
         '.global-talent',
@@ -128,36 +139,76 @@ function animateDiagramDesktop() {
 
       // const bubbles = gsap.utils.toArray(['.bubble']);
 
+      const layersToAnimate = [];
+
       function animateBubbleOnHover(el) {
         groups.forEach((group) => {
-          const rect = group.getBBox();
           const additionalText = group.querySelector('.additional-text');
-          const bubble = group.querySelector('.bubble');
+          const groupContainers = group.querySelectorAll('.layer-4-container'); // Select containers instead of individual layers
+
           if (group !== el) {
-            gsap.to(group, { autoAlpha: 0.1, duration: 0.5 });
+            gsap.to(group, { autoAlpha: 0.4, duration: 0.5 });
             // group.style.pointerEvents = 'none';
           } else {
             gsap.set(group, { transformOrigin: '50% 50%' });
             gsap.to(group, { scale: 1.2 });
             gsap.to(additionalText, { autoAlpha: 1, duration: 0.5, delay: 0.25 });
+
+            groupContainers.forEach((container) => {
+              const elements = container.querySelectorAll('.layer-4');
+              console.log(elements);
+              gsap.set(elements, { autoAlpha: 1, transformOrigin: '50% 50%' });
+
+              gsap.to(elements, {
+                scale: 1.5,
+                autoAlpha: 0,
+                duration: 2,
+                stagger: {
+                  each: 0.5,
+                  repeat: -1,
+                },
+              });
+            });
           }
         });
       }
-
       groups.forEach((group) => {
-        const rect = group.getBBox();
-        console.log('Rect: ', rect);
+        const lastLayers = group.querySelectorAll('.layer-4');
         const bubble = group.querySelector('.bubble');
-        const additionalText = group.querySelector('.additional-text');
+
+        lastLayers.forEach((layer, index) => {
+          // Create a container for the duplicated layers
+          const container = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          container.classList.add('layer-4-container'); // Add a class for targeting
+
+          // gsap.set(container, {
+          //   transformOrigin: '50% 50%',
+          // });
+
+          gsap.set(layer, {
+            transformOrigin: '50% 50%',
+          });
+
+          for (let i = 0; i < 3; i++) {
+            const duplicatedLayer = layer.cloneNode();
+
+            duplicatedLayer.style.pointerEvents = 'none';
+
+            container.appendChild(duplicatedLayer); // Append duplicated layers to the container
+          }
+          bubble.appendChild(container); // Append the container to the group
+        });
+
         bubble.addEventListener('mouseenter', () => {
           animateBubbleOnHover(group);
         });
         bubble.addEventListener('mouseleave', () => {
           gsap.to(groups, { autoAlpha: 1, scale: 1, duration: 0.5 }); // Reset all bubbles to full opacity
           gsap.to('.additional-text', { autoAlpha: 0, duration: 0.5 });
-          // groups.forEach((resetBubble) => {
-          //   resetBubble.style.pointerEvents = 'auto';
-          // });
+          gsap.killTweensOf('.layer-4');
+          gsap.set('.layer-4', {
+            clearProps: 'scale, autoAlpha',
+          });
         });
       });
     })
