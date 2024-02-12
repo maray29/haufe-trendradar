@@ -1,13 +1,14 @@
 import gsap from 'gsap';
 import ScrollTrigger from 'gsap/ScrollTrigger';
+import { CustomEase } from 'gsap/CustomEase';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, CustomEase);
 
 function animateDiagramDesktop() {
   const drawingContainer = document.querySelector('.haufe-trendradar.is-desktop');
   // Fetch the svg from github and append to the embed div
   const diagram =
-    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/10162178d669f5b91296fd8c9e26d139ec8e8a82/haufe-trendradar.html';
+    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/3a0cd84e44bc3d5550256948a2c68f468f6d2f66/haufe-trendradar.html';
 
   fetch(diagram)
     .then((response) => response.text())
@@ -79,7 +80,6 @@ function animateDiagramDesktop() {
       });
 
       // Hover animation
-
       function animateBubbleOnHover(el) {
         groups.forEach((group) => {
           const additionalText = group.querySelector('.additional-text');
@@ -87,17 +87,18 @@ function animateDiagramDesktop() {
           const groupContainers = group.querySelectorAll('.layer-4-container'); // Select containers instead of individual layers
 
           if (group !== el) {
+            gsap.to(additionalText, { autoAlpha: 0, overwrite: false, duration: 0.25 });
+
             gsap.to(group, { autoAlpha: 0.4, duration: 0.5 });
             gsap.to(title, { autoAlpha: 0, duration: 0.5 });
             // group.style.pointerEvents = 'none';
           } else {
             gsap.set(group, { transformOrigin: '50% 50%' });
             gsap.to(group, { scale: 1.2 });
-            gsap.to(additionalText, { autoAlpha: 1, duration: 0.5, delay: 0.25 });
+            gsap.to(additionalText, { autoAlpha: 1, duration: 0.35 });
 
             groupContainers.forEach((container) => {
               const elements = container.querySelectorAll('.layer-4');
-              console.log(elements);
               gsap.set(elements, { autoAlpha: 1, transformOrigin: '50% 50%' });
 
               elements.forEach((element) => {
@@ -143,6 +144,8 @@ function animateDiagramDesktop() {
         });
       });
 
+      // function animateBubbleOnHoverOut(group) {}
+
       // Add event listeners
       function createEventListeners(groups) {
         groups.forEach((group) => {
@@ -153,7 +156,12 @@ function animateDiagramDesktop() {
 
           bubble.addEventListener('mouseleave', () => {
             gsap.to(groups, { autoAlpha: 1, scale: 1, duration: 0.5 });
-            gsap.to('.additional-text', { autoAlpha: 0, duration: 0.5 });
+
+            const additionalText = group.querySelector('.additional-text');
+            if (additionalText) {
+              gsap.to(additionalText, { autoAlpha: 0, duration: 0.35 });
+            }
+
             gsap.killTweensOf('.layer-4');
             gsap.set('.layer-4', {
               clearProps: 'scale, autoAlpha',
@@ -169,24 +177,85 @@ function animateDiagramDesktop() {
 }
 
 // Mobile animations
-
 let lastClickedIndex = null;
 
-function animateBubble(tab, index) {
+// function animateBubble(tab, index) {
+//   // const bubble = tab.querySelector('.bubble')
+//   const tabs = document.querySelectorAll('.tab-pane');
+//   const currentTab = tabs[index];
+//   console.log(currentTab);
+//   const layers = Array.from(currentTab.querySelectorAll('[class^="layer-"]'));
+
+//   if (lastClickedIndex !== index) {
+//     gsap.from(layers, {
+//       autoAlpha: 0,
+//       stagger: 0.1,
+//       delay: 0.5,
+//     });
+//     lastClickedIndex = index;
+//   }
+// }
+
+function animateBubbleTest() {
   // const bubble = tab.querySelector('.bubble')
   const tabs = document.querySelectorAll('.tab-pane');
-  const currentTab = tabs[index];
-  console.log(currentTab);
-  const layers = Array.from(currentTab.querySelectorAll('[class^="layer-"]'));
+  console.log(tabs);
 
-  if (lastClickedIndex !== index) {
-    gsap.from(layers, {
-      autoAlpha: 0,
-      stagger: 0.1,
-      delay: 0.5,
-    });
-    lastClickedIndex = index;
-  }
+  tabs.forEach((tab, index) => {
+    // const currentTab = tab;
+    // console.log(currentTab);
+    // const layers = Array.from(tab.querySelectorAll('[class^="layer-"]'));
+
+    const center = tab.querySelector('.center');
+    const bubble = tab.querySelector('.bubble');
+
+    // gsap.set(bubble, {
+    //   scale: 2,
+    // });
+
+    if (center) {
+      console.log('Center: ', center);
+
+      const bubbleBBox = bubble.getBBox();
+      const centerBBox = center.getBBox();
+
+      const distanceX = document.documentElement.clientWidth / 2 - centerBBox.x;
+      const distanceY = document.documentElement.clientHeight / 2 - centerBBox.y;
+
+      // Calculate center's position relative to bubble
+      const relativeX = centerBBox.x + centerBBox.width / 2;
+      const relativeY = centerBBox.y + centerBBox.height / 2 - bubbleBBox.y;
+
+      // Convert to percentage for transformOrigin
+      const originXPercent = (relativeX / window.innerWidth) * 100;
+      const originYPercent = (relativeY / window.innerHeight) * 100;
+
+      gsap.set(bubble, {
+        transformOrigin: `${originXPercent}% ${originYPercent}%`,
+      });
+
+      gsap.set(bubble, {
+        x: distanceX,
+        y: distanceY,
+        scale: 25,
+      });
+
+      gsap.to(bubble, {
+        scale: 1,
+        duration: 1.5,
+        ease: CustomEase.create(
+          'custom',
+          'M0,0 C0,0.416 -0.019,0.748 0.104,0.874 0.236,1.006 0.504,1 1,1 '
+        ),
+      });
+
+      gsap.to(bubble, {
+        x: 0,
+        y: 0,
+        duration: 1,
+      });
+    }
+  });
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -200,11 +269,13 @@ window.addEventListener('DOMContentLoaded', () => {
   mm.add('(max-width: 478px)', () => {
     // mobile setup code here...
 
+    animateBubbleTest();
+
     const tabLinks = document.querySelectorAll('.tab-link');
-    tabLinks.forEach((link, index) => {
-      link.addEventListener('click', () => {
-        animateBubble(link, index);
-      });
-    });
+    // tabLinks.forEach((link, index) => {
+    //   link.addEventListener('click', () => {
+    //     animateBubble(link, index);
+    //   });
+    // });
   });
 });
