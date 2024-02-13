@@ -1,14 +1,14 @@
 import gsap from 'gsap';
-import ScrollTrigger from 'gsap/ScrollTrigger';
 import { CustomEase } from 'gsap/CustomEase';
+import ScrollTrigger from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger, CustomEase);
 
 function animateDiagramDesktop() {
-  const drawingContainer = document.querySelector('.haufe-trendradar.is-desktop');
+  const drawingContainer = document.querySelector('.trendradar_component.is-desktop');
   // Fetch the svg from github and append to the embed div
   const diagram =
-    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/3a0cd84e44bc3d5550256948a2c68f468f6d2f66/haufe-trendradar.html';
+    'https://gist.githubusercontent.com/maray29/e78f6255dd37f1651ac6ddd97cebba1b/raw/b930f618f84973701757899168fea16103e2e8df/haufe-trendradar.html';
 
   fetch(diagram)
     .then((response) => response.text())
@@ -93,7 +93,7 @@ function animateDiagramDesktop() {
             gsap.to(title, { autoAlpha: 0, duration: 0.5 });
             // group.style.pointerEvents = 'none';
           } else {
-            gsap.set(group, { transformOrigin: '50% 50%' });
+            // gsap.set(group, { transformOrigin: '50% 50%' });
             gsap.to(group, { scale: 1.2 });
             gsap.to(additionalText, { autoAlpha: 1, duration: 0.35 });
 
@@ -177,7 +177,7 @@ function animateDiagramDesktop() {
 }
 
 // Mobile animations
-let lastClickedIndex = null;
+const lastClickedIndex = null;
 
 // function animateBubble(tab, index) {
 //   // const bubble = tab.querySelector('.bubble')
@@ -206,41 +206,72 @@ function animateBubbleTest() {
     // console.log(currentTab);
     // const layers = Array.from(tab.querySelectorAll('[class^="layer-"]'));
 
+    const additionalText = tab.querySelectorAll('text');
     const center = tab.querySelector('.center');
     const bubble = tab.querySelector('.bubble');
+    const svg = tab.querySelector('svg');
 
     // gsap.set(bubble, {
     //   scale: 2,
     // });
 
-    if (center) {
-      console.log('Center: ', center);
-
+    if (center && bubble) {
       const bubbleBBox = bubble.getBBox();
       const centerBBox = center.getBBox();
+      const svgBBox = svg.getBBox();
+      // console.log('SVG: ', svgBBox);
 
-      const distanceX = document.documentElement.clientWidth / 2 - centerBBox.x;
-      const distanceY = document.documentElement.clientHeight / 2 - centerBBox.y;
+      // Calculate scale factors for both dimensions
+      const scaleX = window.innerWidth / bubbleBBox.width;
+      const scaleY = window.innerHeight / bubbleBBox.height;
+      const scale = Math.min(scaleX, scaleY); // Choose the smaller scale factor to ensure the SVG fits entirely
 
-      // Calculate center's position relative to bubble
-      const relativeX = centerBBox.x + centerBBox.width / 2;
-      const relativeY = centerBBox.y + centerBBox.height / 2 - bubbleBBox.y;
+      // Calculate new position to center the bubble
+      const distanceX = window.innerWidth / 2 - centerBBox.x;
+      const distanceY = window.innerHeight / 2 - centerBBox.y;
 
-      // Convert to percentage for transformOrigin
-      const originXPercent = (relativeX / window.innerWidth) * 100;
-      const originYPercent = (relativeY / window.innerHeight) * 100;
+      // Set transform origin to the center of the bubble
+      const originX = ((centerBBox.x - bubbleBBox.x) / bubbleBBox.width) * 100;
+      const originY = ((centerBBox.y - bubbleBBox.y) / bubbleBBox.height) * 100;
 
-      gsap.set(bubble, {
-        transformOrigin: `${originXPercent}% ${originYPercent}%`,
-      });
+      console.log('Distances: ', distanceX, distanceY);
+      // console.log('Origin center: ', originX, originY);
+      // console.log('Dimensions: ', bubbleBBox.height, bubbleBBox.width);
+      // console.log('Bubble bbox', bubbleBBox);
+      // console.log('Center bbox', centerBBox);
 
-      gsap.set(bubble, {
+      // gsap.set(bubble, {
+      //   transformOrigin: `${originXPercent}% ${originYPercent}%`,
+      // });
+
+      const tl = gsap.timeline({ onComplete: () => gsap.set(bubble, { clearProps: 'all' }) });
+
+      // tl.set(bubble, {
+      // transformOrigin: `${originX}% ${originY}%`,
+
+      // scale: 5,
+      // });
+
+      const x = centerBBox.x + centerBBox.width / 2 - bubbleBBox.x;
+      const y = centerBBox.y + centerBBox.height / 2 - bubbleBBox.y;
+
+      console.log(x, y);
+
+      tl.set(bubble, {
+        svgOrigin: `${x} ${y}`,
         x: distanceX,
         y: distanceY,
         scale: 25,
       });
 
-      gsap.to(bubble, {
+      // tl.to(bubble, {
+      //   rotate: 360,
+      //   duration: 5,
+      //   repeat: -1,
+      //   ease: 'none',
+      // });
+
+      tl.to(bubble, {
         scale: 1,
         duration: 1.5,
         ease: CustomEase.create(
@@ -249,17 +280,42 @@ function animateBubbleTest() {
         ),
       });
 
-      gsap.to(bubble, {
-        x: 0,
-        y: 0,
-        duration: 1,
+      tl.to(
+        bubble,
+        {
+          x: 0,
+          y: 0,
+          duration: 1,
+        },
+        '<'
+      );
+      tl.from(additionalText, {
+        autoAlpha: 0,
       });
     }
   });
 }
 
+function scrollTo(selector) {
+  const elToScrollTo = document.querySelector(selector);
+  const elRect = elToScrollTo.getBoundingClientRect();
+  const distance = parseInt(elRect.top);
+  console.log(distance);
+
+  window.scrollTo({
+    top: distance,
+    left: 0,
+    behavior: 'smooth',
+  });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   const mm = gsap.matchMedia();
+
+  const drawingContainer = document.querySelector('.trendradar_component.is-desktop');
+  drawingContainer.addEventListener('click', () => {
+    scrollTo('#contact');
+  });
 
   mm.add('(min-width: 992px)', () => {
     // desktop setup code here...
@@ -269,13 +325,12 @@ window.addEventListener('DOMContentLoaded', () => {
   mm.add('(max-width: 478px)', () => {
     // mobile setup code here...
 
-    animateBubbleTest();
-
-    const tabLinks = document.querySelectorAll('.tab-link');
-    // tabLinks.forEach((link, index) => {
-    //   link.addEventListener('click', () => {
-    //     animateBubble(link, index);
-    //   });
-    // });
+    const tabLinks = document.querySelectorAll('.tab-link:not(.is-header)');
+    tabLinks.forEach((link, index) => {
+      link.addEventListener('click', () => {
+        animateBubbleTest();
+        // animateBubble(link, index);
+      });
+    });
   });
 });
